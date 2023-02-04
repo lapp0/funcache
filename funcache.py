@@ -83,6 +83,13 @@ def cache(retain_hash_fn=(lambda *args, **kwargs: 0), return_copy=True, diskcach
     return cache
 
 
+def arguments_hash(*args, **kwargs):
+    # helper function for defining custom retain_hash_fn's
+    # https://stackoverflow.com/a/10220908
+    return hash(args + (kwd_mark,) + tuple(sorted(kwargs.items())))
+
+
+
 def filename_cache_hash_fn(filename, *args, **kwargs):
     # https://stackoverflow.com/a/44873382
     h  = hashlib.sha256()
@@ -91,7 +98,11 @@ def filename_cache_hash_fn(filename, *args, **kwargs):
     with open(filename, 'rb', buffering=0) as f:
         for n in iter(lambda : f.readinto(mv), 0):
             h.update(mv[:n])
-    return h.hexdigest()
+    return hash((
+        h.hexdigest(),
+        filename,
+        arguments_hash(*args, **kwargs)
+    ))
 
 
 filename_cache = functools.partial(cache, retain_hash_fn=filename_cache_hash_fn)
