@@ -61,14 +61,14 @@ function executed
 
 *** Example: Cache by System Version
 
-Let's say we want to retrieve the list of packages from our system.
+Let's say we want to retrieve the list of packages available to install on our GNU/Linux distro.
 Let's assume that the list of packages is specific to each release of our system.
-Let's add the requirement that the cached result will be returned even for new runs of the program.
+Let's add the requirement that the cached result will be returned even if the program is restarted.
 
-We don't want to retrieve the large list of system packages multiple times if it hasn't changed.
+We don't want to redundantly retrieve the large list of system packages.
 However we also want to ensure we're not returning an out of date list.
 
-Let's create =sysversion_cache()=:
+To solve these constraints, we will create =sysversion_cache=:
 
 #+begin_src
 import platform
@@ -78,12 +78,14 @@ import funcache
 def sysversion_hash():
     return platform.version()
 
+DISKCACHE_DIR = os.path.join(os.environ['XDG_CONFIG_HOME'], "programs_config_path")
+
 def sysversion_cache():
     # return same result if sysversion_hash() has same value, otherwise get new
     # persist results between runs, cache to programs config path
     return funcache.cache(
         retain_hash_fn=lambda: platform.version() # unique string for each system version
-        diskcache_dir=os.path.join(os.environ['XDG_CONFIG_HOME'], "programs_config_path")
+        diskcache_dir=DISKCACHE_DIR
     )
 #+end_src
 
@@ -92,7 +94,8 @@ And then apply it
 #+begin_src
 @sysversion_cache
 def get_package_list():
-    # expensive system api call retrieving packages
+    # expensive system api calls to retrieve list of available packages
+    ...
 #+end_src
 
 With the new =sysversion_cache= decorator, the following happens
@@ -107,23 +110,21 @@ With the new =sysversion_cache= decorator, the following happens
 
 ** =retain_hash_fn()= Behavior
 
-=retain_hash_fn()= is called with the args and kwargs of the decorated function.
-
-The args and kwargs of the decorated function are passed to =retain_hash_fn()= and zero (e.g. =sysversion_cache()=, one (e.g. =filename_cache=), or many of the arguments are used to calculate a hash.
+The args and kwargs of the decorated function are passed to =retain_hash_fn()= and zero (e.g. =@sysversion_cache=, one (e.g. =@filename_cache=), or many of the arguments are used to calculate a hash.
 
 The return value of =retain_hash_fn()= should be a unique string which changes if and only if you want the decorated functions return value to be recalculated rather than returned from cache.
-For example, with =@filename_cache=, the returned hash changes only if =filename='s contents change.
+For example, with =@filename_cache()=, the returned hash changes only if =filename='s contents change.
 
-If the decorated function may have many different possible signatures, it is recommended to use the signature =retain_hash_fn(specified, *args, **kwargs)=.
+If the decorated function can have multiple different possible signatures, it is recommended to use the signature =retain_hash_fn(specified, *args, **kwargs)=.
 
-For example, =filename_cache_hash_fn= is called with =def filename_cache_hash_fn(filename, *args, **kwargs):=, but ignores =*args= and =*kwargs+.
+For example, =filename_cache_hash_fn= is called with =def filename_cache_hash_fn(filename, *args, **kwargs):=, but ignores =*args= and =*kwargs=.
 This allows decoration of a variety of functions with additional arguments
 #+begin_src
-@filename_cache
+@filename_cache()
 def file_consuming_function(filename, x, y):
     ...
 
-@filename_cache
+@filename_cache()
 def function_on_file(filename, foobar=None):
     ...
 #+end_src
