@@ -8,6 +8,7 @@ However, we also don't want to abandon caching entirely.
 In this example ideal behavior is to return the cached result if and only if the file hash remains the same.
 
 * Solution
+
 =funcache= is a Python package providing decorators allowing for easy conditional caching.
 
 ** Example with =filename_cache=:
@@ -45,6 +46,82 @@ function executed
 #+end_src
 
 ** Creating Custom Cache Functions
-TODO:
-- describe how decorator works
-- provide example
+
+=@cache(retain_hash_fn, return_copy, diskcache_dir)= provides a base from which custom caching functions can be derived.
+
+The argument =retain_hash_fn= requires a function which consumes the decorated functions args and kwargs and returns a hash.
+If the hash of the decorated functions relevant arguments is the same as last call, the cached result is returned.
+
+For example, =@funcache.filename_cache()= is defined as a call to =@cache()= with a custom =retain_hash_fn= which hashes the file specified in the =filename= argument.
+
+
+*** Example: Cache by System Version
+
+Let's say we want to retrieve the list of packages from our system.
+Let's assume that the list of packages is specific to each release of our system.
+Let's add the requirement that the cached result will be returned even for new runs of the program.
+
+We don't want to retrieve the large list of system packages multiple times if it hasn't changed.
+However we also want to ensure we're not returning an out of date list.
+
+Let's create =sysversion_cache()=:
+
+#+begin_src
+import platform
+import funcache
+
+# hash function -
+def sysversion_hash():
+    return platform.version()
+
+def sysversion_cache():
+    # return same result if sysversion_hash() has same value, otherwise get new
+    # persist results between runs, cache to programs config path
+    return funcache.cache(
+        retain_hash_fn=lambda: platform.version() # unique string for each system version
+        diskcache_dir=os.path.join(os.environ['XDG_CONFIG_HOME'], "programs_config_path")
+    )
+#+end_src
+
+And then apply it
+
+#+begin_src
+@sysversion_cache
+def get_package_list():
+    # expensive system api call retrieving packages
+#+end_src
+
+With the new =sysversion_cache= decorator, the following happens
+- =get_package_list= always returns the cached package list, unless =platform.version()= changes
+- Cache is persisted to disk, the cached result is returned even if the program restarts
+
+* Reference
+** =@funcache.cache()= Arguments
+- =retain_hash_fn=: A function which gets a hash value from the passed args. If the hash is the same as cached run, return the cached version.
+- =return_copy=: If true, return a copy of the cached return value.
+- =diskcache_dir=: If specified, persist the function results to disk in this directory. Otherwise, only store cache in memory.
+
+** =retain_hash_fn()= Behavior
+
+=retain_hash_fn()= is called with the args and kwargs of the decorated function.
+
+The args and kwargs of the decorated function are passed to =retain_hash_fn()= and zero (e.g. =sysversion_cache()=, one (e.g. =filename_cache=), or many of the arguments are used to calculate a hash.
+
+The return value of =retain_hash_fn()= should be a unique string which changes if and only if you want the decorated functions return value to be recalculated rather than returned from cache.
+For example, with =@filename_cache=, the returned hash changes only if =filename='s contents change.
+
+If the decorated function may have many different possible signatures, it is recommended to use the signature =retain_hash_fn(specified, *args, **kwargs)=.
+
+For example, =filename_cache_hash_fn= is called with =def filename_cache_hash_fn(filename, *args, **kwargs):=, but ignores =*args= and =*kwargs+.
+This allows decoration of a variety of functions with additional arguments
+#+begin_src
+@filename_cache
+def file_consuming_function(filename, x, y):
+    ...
+
+@filename_cache
+def function_on_file(filename, foobar=None):
+    ...
+#+end_rc
+
+If =retain_hash_fn= is unspecified, the decorated function will always return the cached result of the first run.
