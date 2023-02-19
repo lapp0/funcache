@@ -1,6 +1,6 @@
 * Problem
 
-Sometimes multiple calls to =def function(arg_0)= will return a dfferent result for the same =arg_0=.
+Sometimes multiple calls to =def function(arg_0)= will return a different result for the same =arg_0=.
 For example, if =arg_0= is a string file path read within =function()=, the resulting call will vary if the contents change.
 Both =functools.lru_cache= and =diskcache='s =cache.memoize= will result in the same value being returned for cached functions in this scenario.
 
