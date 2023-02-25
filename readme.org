@@ -1,11 +1,9 @@
 * Problem
 
-Sometimes multiple calls to =def function(arg_0)= will return a different result for the same =arg_0=.
-For example, if =arg_0= is a string file path read within =function()=, the resulting call will vary if the contents change.
-Both =functools.lru_cache= and =diskcache='s =cache.memoize= will result in the same value being returned for cached functions in this scenario.
+If =arg= in =f(filename)= is a filename, and =f()= reads the file to determine the return value, the return value will change if the contents of the file change.
+If =filename= remains the same string, both =functools.lru_cache= and =diskcache='s =cache.memoize= will return the same cached value.
 
-However, we also don't want to abandon caching entirely.
-In this example ideal behavior is to return the cached result if and only if the file hash remains the same.
+We want to apply caching to =f()=, but only use the cached value if the passed filename's contents stay the same.
 
 * Solution
 
