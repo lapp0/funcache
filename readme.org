@@ -1,6 +1,6 @@
 * Problem
 
-If =arg= in =f(filename)= is a filename, and =f()= reads the file to determine the return value, the return value will change if the contents of the file change.
+If =f(filename)= reads the passed file to determine the return value, the return value will change if the contents of the file change.
 If =filename= remains the same string, both =functools.lru_cache= and =diskcache='s =cache.memoize= will return the same cached value.
 
 We want to apply caching to =f()=, but only use the cached value if the passed filename's contents stay the same.
