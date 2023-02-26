@@ -4,13 +4,19 @@ We want to apply caching to a function, =f(filename)=.
 However, if =f(filename)= reads the passed file to determine the return value, the return value should change if the contents of the file change.
 If =filename= remains the same string, both =functools.lru_cache= and =diskcache='s =cache.memoize= will return the same cached value.
 
-We want to apply caching to =f(filename)=, but recalculate the return value ("cache miss") if the passed filename's contents change, and return the cached value ("cache hit" if the contents remain the same.
+The cached =f(filename)= should recalculate the return value ("cache miss") if the passed filename's contents change, and return the cached value ("cache hit" if the contents remain the same.
 
 * Solution
 
-=funcache= is a Python package providing decorators allowing for easy conditional caching.
+=funcache= is a Python package providing decorators for easy conditional caching.
 
 ** Example with =filename_cache=:
+
+=@filename_cache= is built into =funcache=.
+This decorator checks the contents of the file specified by =filename= and ensures a cache miss if the contents have changed.
+
+In this example, we cache a simple function, =sum_files_lines=, which returns the sum of each line in a file.
+We demonstrate that the cache is hit if the file remains the same, and misses if changed.
 
 #+begin_src
 >>> import funcache
