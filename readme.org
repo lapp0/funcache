@@ -56,7 +56,7 @@ function executed
 
 =retain_hash_fn= is a function which returns a hash. If this hash remains the same, the cache is hit, otherwise it misses.
 
-=@funcache.filename_cache()= is defined as a call to =@cache()= with a custom =retain_hash_fn= which hashes the file specified in the =filename= argument.
+=@funcache.filename_cache()= is defined with a call to =@cache()=, specifying a =retain_hash_fn= which hashes the contents of the passed =filename=.
 
 
 *** Example: Cache by System Version
