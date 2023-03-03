@@ -8,12 +8,12 @@ The cached =f(filename)= should recalculate the return value ("cache miss") if t
 
 * Solution
 
-=funcache= is a Python package providing decorators for easy conditional caching.
+=funcache= is a Python module providing decorators for easy conditional caching.
 
-** Example with =filename_cache=:
+** Example with =@filename_cache=:
 
 =@filename_cache= is built into =funcache=.
-This decorator checks the contents of the file specified by =filename= and ensures a cache miss if the contents have changed.
+This decorator checks the contents of the =filename= argument and ensures a cache miss if the contents have changed.
 
 In this example, we cache a simple function, =sum_files_lines=, which returns the sum of each line in a file.
 We demonstrate that the cache is hit if the file remains the same, and misses if changed.
@@ -54,10 +54,9 @@ function executed
 
 =@cache(retain_hash_fn, return_copy, diskcache_dir)= provides a base from which custom caching functions can be derived.
 
-The argument =retain_hash_fn= requires a function which consumes the decorated functions args and kwargs and returns a hash.
-If the hash of the decorated functions relevant arguments is the same as last call, the cached result is returned.
+=retain_hash_fn= is a function which returns a hash. If this hash remains the same, the cache is hit, otherwise it misses.
 
-For example, =@funcache.filename_cache()= is defined as a call to =@cache()= with a custom =retain_hash_fn= which hashes the file specified in the =filename= argument.
+=@funcache.filename_cache()= is defined as a call to =@cache()= with a custom =retain_hash_fn= which hashes the file specified in the =filename= argument.
 
 
 *** Example: Cache by System Version
@@ -127,6 +126,6 @@ def file_consuming_function(filename, x, y):
 @filename_cache
 def function_on_file(filename, foobar=None):
     ...
-#+end_rc
+#+end_src
 
 If =retain_hash_fn= is unspecified, the decorated function will always return the cached result of the first run.
