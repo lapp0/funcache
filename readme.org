@@ -1,0 +1,50 @@
+* Problem
+
+Sometimes multiple calls to =def function(arg_0)= will return a dfferent result for the same =arg_0=.
+For example, if =arg_0= is a string file path read within =function()=, the resulting call will vary if the contents change.
+Both =functools.lru_cache= and =diskcache='s =cache.memoize= will result in the same value being returned for cached functions in this scenario.
+
+However, we also don't want to abandon caching entirely.
+In this example ideal behavior is to return the cached result if and only if the file hash remains the same.
+
+* Solution
+=funcache= is a Python package providing decorators allowing for easy conditional caching.
+
+** Example with =filename_cache=:
+
+#+begin_src
+>>> import funcache
+>>>
+>>> @funcache.filename_cache()
+... def sum_files_lines(filename):
+...     print("function executed")
+...     with open(filename) as f:
+...         return sum([int(line) for line in f.readlines()])
+
+>>> # write lines containing the numbers 1 through 4 (sums to 10)
+>>> with open("example.txt", 'w') as f:
+...     f.write("1\n2\n3\n4")
+
+
+>>> # call twice, but run once, second time cache is used
+>>> result = sum_files_lines("example.txt")
+function executed
+>>> result = sum_files_lines("example.txt")
+>>> print(result)
+10
+
+>>> # overwrite file, change contents to numbers 5 through 10 (sums to 45)
+>>> with open("example.txt", 'w') as f:
+...     f.write("5\n6\n7\n8\n9\n10")
+
+>>> # same "example.txt" argument passed, but new result calculated
+>>> result = sum_files_lines("example.txt")
+function executed
+>>> print(result)
+45
+#+end_src
+
+** Creating Custom Cache Functions
+TODO:
+- describe how decorator works
+- provide example
